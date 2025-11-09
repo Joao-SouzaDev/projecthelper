@@ -1,0 +1,47 @@
+# Arquivos de dependências (gerenciados pelo Composer)
+/vendor/
+composer.lock
+
+# Arquivos de configuração de IDEs e editores
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+nbproject/
+
+# Arquivos de sistema operacional
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Arquivos de log e temporários
+*.log
+/logs/
+/tmp/
+*~
+*.swp
+*.swo
+
+# Arquivos de build, pacotes e distribuição
+/build/
+/dist/
+*.zip
+*.tar.gz
+*.phar
+
+# Arquivos de configuração local (nunca devem ir para o repositório)
+.env
+.env.local
+.env.*.local
+
+# Cache de ferramentas de análise de código e testes
+.phpunit.result.cache
+.php-cs-fixer.cache
+.psalm/cache/
+.phpstan/
+
+# Arquivos específicos de desenvolvimento local
+# Se você tiver uma cópia do GLPI para teste dentro do projeto (não recomendado)
+# /glpi/
