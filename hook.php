@@ -1,48 +1,54 @@
 <?php
 
-/**
- * -------------------------------------------------------------------------
- * ProjectHelper plugin for GLPI
- * -------------------------------------------------------------------------
- *
- * MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- * -------------------------------------------------------------------------
- * @copyright Copyright (C) 2025 by the ProjectHelper plugin team.
- * @license   MIT https://opensource.org/licenses/mit-license.php
- * @link      https://github.com/pluginsGLPI/projecthelper
- * -------------------------------------------------------------------------
- */
+use GlpiPlugin\Projecthelper\Install;
 
 /**
- * Plugin install process
+ * Define a versão do plugin e a compatibilidade com o GLPI
  */
-function plugin_projecthelper_install(): bool
+function plugin_version_projecthelper()
+{
+    return [
+        'name' => 'Project Helper',
+        'version' => '1.0.1',
+        'author' => 'Joao-SouzaDev',
+        'license' => 'AGPLv3+',
+        'homepage' => 'https://github.com/Joao-SouzaDev/projecthelper',
+        'minGlpiVersion' => '10.0.0'
+    ];
+}
+
+/**
+ * Função opcional que verifica se os pré-requisitos para a ativação do plugin são atendidos.
+ * Retorna true se os pré-requisitos forem atendidos, senão uma string com a mensagem de erro.
+ */
+function plugin_projecthelper_check_prerequisites()
 {
     return true;
 }
 
 /**
- * Plugin uninstall process
+ * Função de inicialização do plugin. Registra todos os hooks necessários.
  */
-function plugin_projecthelper_uninstall(): bool
+function plugin_init_projecthelper()
 {
-    return true;
+    global $PLUGIN_HOOKS;
+
+    // Registra o autoloader para o namespace do plugin
+    $PLUGIN_HOOKS['autoloader']['projecthelper'] = [
+        'GlpiPlugin\\Projecthelper' => 'src',
+    ];
+
+    // Adiciona a página de configuração ao menu
+    $PLUGIN_HOOKS['config_page']['projecthelper'] = 'front/config.form.php';
+
+    // Conformidade com CSRF
+    $PLUGIN_HOOKS['csrf_compliant']['projecthelper'] = true;
+
+    // Hook que é executado ANTES da instalação padrão do GLPI.
+    $PLUGIN_HOOKS['pre_install']['projecthelper'] = [Install::class, 'install'];
+
+    // Hook para desinstalação.
+    $PLUGIN_HOOKS['uninstall']['projecthelper'] = [Install::class, 'uninstall'];
+    $PLUGIN_HOOKS['update']['projecthelper'] = [Install::class, 'update'];
+
 }

@@ -1,114 +1,33 @@
 <?php
 
-/**
- * -------------------------------------------------------------------------
- * ProjectHelper plugin for GLPI
- * -------------------------------------------------------------------------
- *
- * MIT License
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- * -------------------------------------------------------------------------
- * @copyright Copyright (C) 2025 by the ProjectHelper plugin team.
- * @license   MIT https://opensource.org/licenses/mit-license.php
- * @link      https://github.com/pluginsGLPI/projecthelper
- * -------------------------------------------------------------------------
- */
+// Centraliza a definição de versão e hooks no hook.php
+include_once __DIR__ . '/hook.php';
 
-define('PLUGIN_PROJECTHELPER_VERSION', '0.0.1');
-
-// Minimal GLPI version, inclusive
-define("PLUGIN_PROJECTHELPER_MIN_GLPI_VERSION", "10.0.0");
-
-// Maximum GLPI version, exclusive
-define("PLUGIN_PROJECTHELPER_MAX_GLPI_VERSION", "10.0.99");
+use GlpiPlugin\Projecthelper\Install;
 
 /**
- * Init hooks of the plugin.
- * REQUIRED
+ * Função de instalação legada para garantir compatibilidade.
  */
-function plugin_init_projecthelper(): void
+function plugin_projecthelper_install()
 {
-    /** @var array<string, array<string, mixed>> $PLUGIN_HOOKS */
-    global $PLUGIN_HOOKS;
+    // O autoloader do plugin é carregado via hook.php, tornando a classe Install disponível.
+    if (class_exists(Install::class)) {
+        return Install::install(); // <--- Alterado aqui (sem parâmetros)
+    }
 
-    $PLUGIN_HOOKS['csrf_compliant']['projecthelper'] = true;
+    trigger_error("ProjectHelper Install class not found.", E_USER_ERROR);
+    return false;
 }
 
 /**
- * Get the name and the version of the plugin
- * REQUIRED
- *
- * @return array{
- *      name: string,
- *      version: string,
- *      author: string,
- *      license: string,
- *      homepage: string,
- *      requirements: array{
- *          glpi: array{
- *              min: string,
- *              max: string,
- *          }
- *      }
- * }
+ * Função de desinstalação legada para garantir compatibilidade.
  */
-function plugin_version_projecthelper(): array
+function plugin_projecthelper_uninstall()
 {
-    return [
-        'name'           => 'ProjectHelper',
-        'version'        => PLUGIN_PROJECTHELPER_VERSION,
-        'author'         => '<a href="http://www.teclib.com">Teclib\'</a>',
-        'license'        => '',
-        'homepage'       => '',
-        'requirements'   => [
-            'glpi' => [
-                'min' => PLUGIN_PROJECTHELPER_MIN_GLPI_VERSION,
-                'max' => PLUGIN_PROJECTHELPER_MAX_GLPI_VERSION,
-            ],
-        ],
-    ];
-}
+    if (class_exists(Install::class)) {
+        return Install::uninstall(); // <--- Alterado aqui (sem parâmetros)
+    }
 
-/**
- * Check pre-requisites before install
- * OPTIONAL
- */
-function plugin_projecthelper_check_prerequisites(): bool
-{
-    return true;
-}
-
-/**
- * Check configuration process
- * OPTIONAL
- *
- * @param bool $verbose Whether to display message on failure. Defaults to false.
- */
-function plugin_projecthelper_check_config(bool $verbose = false): bool
-{
-    // Your configuration check
-    return true;
-
-    // Example:
-    // if ($verbose) {
-    //    echo __('Installed / not configured', 'projecthelper');
-    // }
-    // return false;
+    trigger_error("ProjectHelper Install class not found.", E_USER_ERROR);
+    return false;
 }
