@@ -51,4 +51,9 @@ function plugin_init_projecthelper()
     $PLUGIN_HOOKS['uninstall']['projecthelper'] = [Install::class, 'uninstall'];
     $PLUGIN_HOOKS['update']['projecthelper'] = [Install::class, 'update'];
 
+    // Hook para replicar followups quando adicionados a um ticket
+    $PLUGIN_HOOKS['item_add']['projecthelper'] = [
+        'ITILFollowup' => [\GlpiPlugin\Projecthelper\FollowupHandler::class, 'afterAddFollowup']
+    ];
+
 }

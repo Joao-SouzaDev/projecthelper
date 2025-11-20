@@ -10,7 +10,6 @@ if (!defined('GLPI_ROOT')) {
 
 class Config extends CommonDBTM
 {
-
     static function getTable($classname = null)
     {
         // Define o nome da tabela sem o 'glpi_'
