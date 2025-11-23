@@ -9,7 +9,7 @@ function plugin_version_projecthelper()
 {
     return [
         'name' => 'Project Helper',
-        'version' => '1.0.1',
+        'version' => '1.2.0',
         'author' => 'Joao-SouzaDev',
         'license' => 'AGPLv3+',
         'homepage' => 'https://github.com/Joao-SouzaDev/projecthelper',
@@ -53,7 +53,8 @@ function plugin_init_projecthelper()
 
     // Hook para replicar followups quando adicionados a um ticket
     $PLUGIN_HOOKS['item_add']['projecthelper'] = [
-        'ITILFollowup' => [\GlpiPlugin\Projecthelper\FollowupHandler::class, 'afterAddFollowup']
+        'ITILFollowup' => [\GlpiPlugin\Projecthelper\FollowupHandler::class, 'afterAddFollowup'],
+        'TicketTask' => [\GlpiPlugin\Projecthelper\TaskHandler::class, 'afterAddTask']
     ];
 
 }

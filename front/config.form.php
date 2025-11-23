@@ -62,14 +62,22 @@ echo "</tr>";
 
 $replicate_options = [
     0 => __('No'),
-    1 => __('Yes, for all'),
-    2 => __('Yes, select per ticket')
+    1 => __('Yes, replicate to all project tickets'),
+    2 => __('Yes, replicate from parent to children'),
+    3 => __('Yes, replicate from child to parent')
 ];
 
 echo "<tr>";
-echo "<td>" . __('Replicate follow-ups from linked tickets to the Project', 'projecthelper') . "</td>";
+echo "<td>" . __("Replicate follow-ups from linked tickets to the Project", "projecthelper") . "</td>";
 echo "<td>";
 Dropdown::showFromArray("replicate_followups", $replicate_options, ['value' => $current_config['replicate_followups']]);
+echo "</td>";
+echo "</tr>";
+
+echo "<tr>";
+echo "<td>" . __("Replicate tasks from linked tickets to the Project", "projecthelper") . "</td>";
+echo "<td>";
+Dropdown::showFromArray("replicate_tasks", $replicate_options, ['value' => $current_config['replicate_tasks']]);
 echo "</td>";
 echo "</tr>";
 echo "</table>";

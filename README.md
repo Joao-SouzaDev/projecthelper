@@ -4,8 +4,9 @@ Plugin para GLPI que adiciona funcionalidades auxiliares para gerenciamento de p
 
 ## Funcionalidades
 
-### 🔄 Replicação Automática de Acompanhamentos
-- Replica automaticamente acompanhamentos (followups) entre tickets do mesmo projeto
+### 🔄 Replicação Automática de Acompanhamentos e Tarefas
+- Replica automaticamente acompanhamentos (followups) e tarefas (tasks) entre tickets relacionados
+- Três modos de replicação: todos do projeto, pai para filhos, filho para pai
 - Configurável via interface do plugin
 - Mantém autor, data e privacidade originais
 
@@ -26,20 +27,42 @@ Plugin para GLPI que adiciona funcionalidades auxiliares para gerenciamento de p
 1. Acesse **Configuração > Plugins > Project Helper**
 2. Configure "Replicate follow-ups from linked tickets to the Project":
    - **No**: Desabilitado
-   - **Yes, for all**: Replica para todos os tickets do mesmo projeto
-   - **Yes, select per ticket**: (Reservado para implementação futura)
+   - **Yes, replicate to all project tickets**: Replica para todos os tickets vinculados ao mesmo projeto
+   - **Yes, replicate from parent to children**: Replica acompanhamentos de um ticket pai para todos os seus tickets filhos
+   - **Yes, replicate from child to parent**: Replica acompanhamentos de um ticket filho para o seu ticket pai
+
+### Replicação de Tarefas
+1. Acesse **Configuração > Plugins > Project Helper**
+2. Configure "Replicate tasks from linked tickets to the Project":
+   - **No**: Desabilitado
+   - **Yes, replicate to all project tickets**: Replica para todos os tickets vinculados ao mesmo projeto
+   - **Yes, replicate from parent to children**: Replica tarefas de um ticket pai para todos os seus tickets filhos
+   - **Yes, replicate from child to parent**: Replica tarefas de um ticket filho para o seu ticket pai
 
 ## Uso
 
 Após configurar a replicação de acompanhamentos:
+
+**Modo 1 - Todos do projeto:**
 1. Vincule múltiplos tickets a um mesmo projeto
 2. Adicione um acompanhamento em qualquer um dos tickets
 3. O acompanhamento será automaticamente replicado para todos os outros tickets do projeto
+
+**Modo 2 - Pai para filhos:**
+1. Crie uma relação pai/filho entre tickets
+2. Adicione um acompanhamento no ticket pai
+3. O acompanhamento será automaticamente replicado para todos os tickets filhos
+
+**Modo 3 - Filho para pai:**
+1. Crie uma relação pai/filho entre tickets
+2. Adicione um acompanhamento no ticket filho
+3. O acompanhamento será automaticamente replicado para o ticket pai
 
 ## Documentação
 
 - [Guia de Instalação Completo](INSTALLATION_GUIDE.md)
 - [Documentação Técnica - Replicação de Followups](FOLLOWUP_REPLICATION.md)
+- [Documentação Técnica - Replicação de Tasks](TASK_REPLICATION.md)
 
 ## Requisitos
 

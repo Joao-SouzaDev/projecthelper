@@ -23,7 +23,8 @@ class Install
             $query = "CREATE TABLE `$config_table` (
                         `id` INT(11) NOT NULL AUTO_INCREMENT,
                         `show_progress_bar` TINYINT(1) NOT NULL DEFAULT '1' COMMENT '1 for Yes, 0 for No',
-                        `replicate_followups` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '0=No, 1=Yes all, 2=Yes select',
+                        `replicate_followups` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent',
+                        `replicate_tasks` TINYINT(1) NOT NULL DEFAULT '0' COMMENT '0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent',
                         `date_mod` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
                         PRIMARY KEY (`id`)
                      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -33,7 +34,8 @@ class Install
             $DB->insert($config_table, [
                 'id' => 1,
                 'show_progress_bar' => 1,
-                'replicate_followups' => 0
+                'replicate_followups' => 0,
+                'replicate_tasks' => 0
             ]);
         }
 
@@ -90,9 +92,41 @@ class Install
                     "-- alter replicate_followups column type",
                     "ALTER TABLE `$config_table`
                      CHANGE `replicate_followups` `replicate_followups` TINYINT(1) NOT NULL DEFAULT '0'
-                     COMMENT '0=No, 1=Yes all, 2=Yes select';"
+                     COMMENT '0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent';"
                 );
             }
+            $migration->executeMigration();
+        }
+
+        // Migration para v1.1.0 - atualiza comentário do campo para refletir novas opções
+        if (version_compare($old_version->getVersion(), '1.1.0', '<')) {
+            $migration = new Migration(110); // 1.1.0
+
+            // Atualiza apenas o comentário do campo para refletir as 3 opções
+            $migration->add(
+                "-- update replicate_followups comment for v1.1.0",
+                "ALTER TABLE `$config_table`
+                 MODIFY `replicate_followups` TINYINT(1) NOT NULL DEFAULT '0'
+                 COMMENT '0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent';"
+            );
+
+            $migration->executeMigration();
+        }
+
+        // Migration para v1.2.0 - adiciona campo replicate_tasks
+        if (version_compare($old_version->getVersion(), '1.2.0', '<')) {
+            $migration = new Migration(120); // 1.2.0
+
+            // Adiciona o campo replicate_tasks se não existir
+            if (!$DB->fieldExists($config_table, 'replicate_tasks')) {
+                $migration->addField(
+                    $config_table,
+                    'replicate_tasks',
+                    'TINYINT(1) NOT NULL DEFAULT \'0\' COMMENT \'0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent\'',
+                    ['after' => 'replicate_followups']
+                );
+            }
+
             $migration->executeMigration();
         }
     }

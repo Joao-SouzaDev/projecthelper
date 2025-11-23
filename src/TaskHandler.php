@@ -2,17 +2,14 @@
 
 namespace GlpiPlugin\Projecthelper;
 
-use ITILFollowup;
+use TicketTask;
 use Ticket;
-use ProjectTask_Ticket;
-use ProjectTask;
-use Config as PluginConfig;
 
 if (!defined('GLPI_ROOT')) {
     die("Sorry. You can't access this file directly");
 }
 
-class FollowupHandler
+class TaskHandler
 {
     /**
      * Flag para evitar recursão infinita
@@ -29,21 +26,21 @@ class FollowupHandler
     {
         // Log desabilitado para evitar problemas de permissão
         // Para debug, descomente a linha abaixo:
-        // error_log("[ProjectHelper FollowupHandler] $message");
+        // error_log("[ProjectHelper TaskHandler] $message");
     }
 
     /**
-     * Hook chamado após adicionar um followup
+     * Hook chamado após adicionar uma task
      * 
-     * @param ITILFollowup $followup
+     * @param TicketTask $task
      * @return void
      */
-    public static function afterAddFollowup(ITILFollowup $followup)
+    public static function afterAddTask(TicketTask $task)
     {
         global $DB;
 
         // Log de debug
-        self::logDebug("Hook afterAddFollowup chamado");
+        self::logDebug("Hook afterAddTask chamado");
 
         // Evita recursão infinita
         if (self::$is_replicating) {
@@ -55,9 +52,9 @@ class FollowupHandler
         $replicate_config = new Config();
         $replicate_config->getFromDB(1);
 
-        self::logDebug("Configuração replicate_followups: " . $replicate_config->fields['replicate_followups']);
+        self::logDebug("Configuração replicate_tasks: " . $replicate_config->fields['replicate_tasks']);
 
-        $replication_mode = (int) $replicate_config->fields['replicate_followups'];
+        $replication_mode = (int) $replicate_config->fields['replicate_tasks'];
 
         // Verifica se a replicação está desabilitada
         if ($replication_mode == 0) {
@@ -65,17 +62,17 @@ class FollowupHandler
             return;
         }
 
-        // Obtém dados do followup recém-criado
-        $followup_data = $followup->fields;
+        // Obtém dados da task recém-criada
+        $task_data = $task->fields;
 
-        // Verifica se é um followup de ticket
-        if ($followup_data['itemtype'] != 'Ticket') {
-            self::logDebug("Followup não é de ticket, itemtype: " . $followup_data['itemtype']);
+        // Verifica se é uma task de ticket
+        if (!isset($task_data['tickets_id']) || empty($task_data['tickets_id'])) {
+            self::logDebug("Task não é de ticket");
             return;
         }
 
-        $ticket_id = $followup_data['items_id'];
-        self::logDebug("Processando followup do ticket #$ticket_id");
+        $ticket_id = $task_data['tickets_id'];
+        self::logDebug("Processando task do ticket #$ticket_id");
 
         $related_tickets = [];
 
@@ -117,40 +114,16 @@ class FollowupHandler
         // Ativa flag de replicação
         self::$is_replicating = true;
 
-        // Replica o followup para cada ticket relacionado
+        // Replica a task para cada ticket relacionado
         foreach ($related_tickets as $related_ticket_id) {
-            self::logDebug("Replicando followup para ticket #$related_ticket_id");
-            $result = self::replicateFollowup($followup_data, $related_ticket_id);
+            self::logDebug("Replicando task para ticket #$related_ticket_id");
+            $result = self::replicateTask($task_data, $related_ticket_id);
             self::logDebug("Resultado da replicação: " . ($result ? "sucesso" : "falha"));
         }
 
         // Desativa flag de replicação
         self::$is_replicating = false;
         self::logDebug("Replicação concluída");
-    }
-
-    /**
-     * Busca a configuração de replicação do banco de dados
-     * 
-     * @return int
-     */
-    private static function getReplicateConfig()
-    {
-        global $DB;
-
-        $query = "SELECT replicate_followups 
-                  FROM glpi_plugin_projecthelper_configs 
-                  WHERE id = 1 
-                  LIMIT 1";
-
-        $result = $DB->query($query);
-
-        if ($result && $DB->numrows($result) > 0) {
-            $row = $DB->fetchAssoc($result);
-            return (int) $row['replicate_followups'];
-        }
-
-        return 0; // Desabilitado por padrão
     }
 
     /**
@@ -278,29 +251,33 @@ class FollowupHandler
     }
 
     /**
-     * Replica um followup para outro ticket
+     * Replica uma task para outro ticket
      * 
-     * @param array $original_followup_data
+     * @param array $original_task_data
      * @param int $target_ticket_id
      * @return bool
      */
-    private static function replicateFollowup($original_followup_data, $target_ticket_id)
+    private static function replicateTask($original_task_data, $target_ticket_id)
     {
-        $new_followup = new ITILFollowup();
+        $new_task = new TicketTask();
 
-        // Prepara os dados para o novo followup
+        // Prepara os dados para a nova task
         $data = [
-            'itemtype' => 'Ticket',
-            'items_id' => $target_ticket_id,
-            'date' => $original_followup_data['date'],
-            'users_id' => $original_followup_data['users_id'],
-            'content' => $original_followup_data['content'],
-            'is_private' => $original_followup_data['is_private'],
-            'requesttypes_id' => $original_followup_data['requesttypes_id'] ?? 0,
-            'timeline_position' => $original_followup_data['timeline_position'] ?? 1,
+            'tickets_id' => $target_ticket_id,
+            'taskcategories_id' => $original_task_data['taskcategories_id'] ?? 0,
+            'date' => $original_task_data['date'],
+            'begin' => $original_task_data['begin'] ?? null,
+            'end' => $original_task_data['end'] ?? null,
+            'users_id' => $original_task_data['users_id'],
+            'users_id_tech' => $original_task_data['users_id_tech'] ?? 0,
+            'groups_id_tech' => $original_task_data['groups_id_tech'] ?? 0,
+            'content' => $original_task_data['content'],
+            'actiontime' => $original_task_data['actiontime'] ?? 0,
+            'state' => $original_task_data['state'] ?? 1,
+            'is_private' => $original_task_data['is_private'] ?? 0,
         ];
 
-        // Adiciona o novo followup
-        return $new_followup->add($data);
+        // Adiciona a nova task
+        return $new_task->add($data);
     }
 }
