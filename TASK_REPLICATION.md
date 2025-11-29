@@ -116,19 +116,24 @@ O plugin utiliza as tabelas padrão do GLPI:
 
 ## Campos Replicados
 
-As seguintes informações da task são replicadas:
+### ✅ Campos que SÃO replicados:
 - **tickets_id**: Alterado para o ticket de destino
 - **taskcategories_id**: Categoria da tarefa
 - **date**: Data de criação original
-- **begin**: Data/hora de início
-- **end**: Data/hora de término
 - **users_id**: Usuário criador
 - **users_id_tech**: Técnico responsável
 - **groups_id_tech**: Grupo técnico responsável
 - **content**: Conteúdo/descrição da tarefa
-- **actiontime**: Tempo de duração (em segundos)
-- **state**: Estado da tarefa
 - **is_private**: Se a tarefa é privada
+
+### ❌ Campos que NÃO são replicados:
+- **begin**: Data/hora de início (sempre NULL)
+- **end**: Data/hora de término (sempre NULL)
+- **actiontime**: Tempo de duração (sempre 0)
+- **state**: Estado da tarefa (sempre 1 = Information)
+
+### 📝 Importante:
+As tarefas replicadas são **apenas informativas**. Elas servem para manter todos os tickets relacionados informados sobre o trabalho sendo realizado, mas **não contam como apontamento de tempo**. Isso evita duplicação de horas trabalhadas nos relatórios do GLPI.
 
 ## Exemplo de Uso
 
@@ -183,19 +188,32 @@ As seguintes informações da task são replicadas:
 - **Modo 1**: A replicação só ocorre para tickets **vinculados ao mesmo projeto via glpi_itils_projects**
 - **Modos 2 e 3**: A replicação funciona independente de projetos, apenas com base na relação pai/filho
 - Tickets sem vínculo apropriado (projeto ou pai/filho) não acionam a replicação
-- A tarefa replicada mantém todas as características do original (autor, técnico, tempos, privacidade)
+- **Tasks replicadas são INFORMATIVAS**: Não contam como apontamento de tempo, servem apenas para comunicação
 - A configuração pode ser alterada a qualquer momento pelo administrador
 - Logs de debug estão desabilitados por padrão para evitar problemas de permissão
 
+### 🎯 Por que tasks replicadas são apenas informativas?
+
+**Problema**: Se replicássemos os tempos (`actiontime`, `begin`, `end`), teríamos duplicação de horas nos relatórios do GLPI.
+
+**Exemplo**:
+- Técnico registra 2 horas no Ticket #100
+- Se replicasse para Tickets #101 e #102, o sistema contaria 6 horas (2h × 3 tickets)
+- Isso distorceria totalmente os relatórios de produtividade
+
+**Solução**: Tasks replicadas são marcadas como tipo "Information" (state=1) e não têm apontamento de tempo (`actiontime=0`). Isso permite que todos os tickets relacionados fiquem informados sobre o trabalho, mas apenas o ticket original conta o tempo real trabalhado.
+
 ## Diferenças entre Followups e Tasks
 
-| Aspecto | Followups | Tasks |
-|---------|-----------|-------|
-| Tabela | `glpi_itilfollowups` | `glpi_tickettasks` |
-| Campos | content, users_id, date, is_private | content, users_id, date, is_private, begin, end, actiontime, state, category |
-| Uso | Acompanhamento/comentários | Trabalho técnico/planejamento |
-| Tempo | Não rastreia tempo de execução | Rastreia tempo (actiontime) |
-| Técnico | Apenas autor | Autor + técnico responsável + grupo |
+| Aspecto | Followups | Tasks (Original) | Tasks (Replicada) |
+|---------|-----------|------------------|-------------------|
+| Tabela | `glpi_itilfollowups` | `glpi_tickettasks` | `glpi_tickettasks` |
+| Campos replicados | content, users_id, date, is_private | N/A | content, users_id, date, is_private, category, técnico |
+| Uso | Acompanhamento/comentários | Trabalho técnico real | Informação sobre trabalho |
+| Tempo | Não rastreia | Rastreia tempo (actiontime) | **NÃO rastreia** (actiontime=0) |
+| Técnico | Apenas autor | Autor + técnico + grupo | Autor + técnico + grupo |
+| State | N/A | Variável (Planned/Done) | Sempre 1 (Information) |
+| Apontamento | Não | **Sim** | **Não** |
 
 ## Casos de Uso
 

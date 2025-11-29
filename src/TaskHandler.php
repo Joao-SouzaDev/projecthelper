@@ -253,6 +253,10 @@ class TaskHandler
     /**
      * Replica uma task para outro ticket
      * 
+     * IMPORTANTE: A task replicada é apenas informativa, não é um apontamento de tempo.
+     * Por isso, os campos de tempo (begin, end, actiontime) não são preenchidos e o
+     * state é sempre definido como 1 (Information).
+     * 
      * @param array $original_task_data
      * @param int $target_ticket_id
      * @return bool
@@ -262,19 +266,22 @@ class TaskHandler
         $new_task = new TicketTask();
 
         // Prepara os dados para a nova task
+        // A task replicada é APENAS INFORMATIVA, não inclui apontamento de tempo
         $data = [
             'tickets_id' => $target_ticket_id,
             'taskcategories_id' => $original_task_data['taskcategories_id'] ?? 0,
             'date' => $original_task_data['date'],
-            'begin' => $original_task_data['begin'] ?? null,
-            'end' => $original_task_data['end'] ?? null,
             'users_id' => $original_task_data['users_id'],
             'users_id_tech' => $original_task_data['users_id_tech'] ?? 0,
             'groups_id_tech' => $original_task_data['groups_id_tech'] ?? 0,
             'content' => $original_task_data['content'],
-            'actiontime' => $original_task_data['actiontime'] ?? 0,
-            'state' => $original_task_data['state'] ?? 1,
             'is_private' => $original_task_data['is_private'] ?? 0,
+            // Campos de tempo NÃO são replicados (task apenas informativa)
+            'begin' => null,
+            'end' => null,
+            'actiontime' => 0,
+            // State sempre 1 = Information (não é um apontamento real)
+            'state' => 1,
         ];
 
         // Adiciona a nova task

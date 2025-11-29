@@ -9,7 +9,7 @@ function plugin_version_projecthelper()
 {
     return [
         'name' => 'Project Helper',
-        'version' => '1.2.0',
+        'version' => '1.2.1',
         'author' => 'Joao-SouzaDev',
         'license' => 'AGPLv3+',
         'homepage' => 'https://github.com/Joao-SouzaDev/projecthelper',

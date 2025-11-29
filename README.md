@@ -39,6 +39,8 @@ Plugin para GLPI que adiciona funcionalidades auxiliares para gerenciamento de p
    - **Yes, replicate from parent to children**: Replica tarefas de um ticket pai para todos os seus tickets filhos
    - **Yes, replicate from child to parent**: Replica tarefas de um ticket filho para o seu ticket pai
 
+> **⚠️ Importante**: As tarefas replicadas são apenas **informativas** e não contam como apontamento de tempo. Elas servem para manter todos os tickets relacionados informados sobre o trabalho sendo realizado, mas o tempo trabalhado (`actiontime`) só é contabilizado no ticket original. Isso evita duplicação de horas nos relatórios do GLPI.
+
 ## Uso
 
 Após configurar a replicação de acompanhamentos:
