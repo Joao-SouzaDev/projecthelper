@@ -2,6 +2,34 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+## [1.3.0] - 2025-11-29
+
+### ✨ Novo
+- **Múltiplas seleções**: Agora é possível selecionar múltiplos modos de replicação simultaneamente para followups e tasks
+  - Exemplo: Replicar para tickets do projeto (modo 1) + tickets relacionados (modo 4) ao mesmo tempo
+  - Interface atualizada com checkboxes em vez de dropdown único
+  
+- **Modo 4 - Tickets Relacionados**: Novo modo de replicação que replica followups/tasks para tickets relacionados (link = 2)
+  - Funciona com relacionamentos bidirecionais do GLPI
+  - Independente de projetos ou hierarquia pai/filho
+
+### 🔧 Modificado
+- Campos `replicate_followups` e `replicate_tasks` alterados de TINYINT para VARCHAR(50)
+  - Armazena múltiplas seleções como string separada por vírgulas (ex: "1,2,4")
+- Lógica de replicação refatorada para processar múltiplos modos em um único evento
+- Remoção automática de duplicatas ao combinar resultados de diferentes modos
+
+### 📚 Documentação
+- Atualizada documentação para refletir novo modo 4 e múltiplas seleções
+- Guia de configuração atualizado com exemplos de uso combinado
+
+### 🛠️ Técnico
+- Nova migration v1.3.0 converte campos TINYINT para VARCHAR automaticamente
+- Métodos `getRelatedTickets()` adicionados em FollowupHandler e TaskHandler
+- Lógica de loop para processar array de modos de replicação
+
+---
+
 ## [1.2.1] - 2025-11-29
 
 ### 🔧 Modificado

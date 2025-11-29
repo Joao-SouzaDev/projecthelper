@@ -57,8 +57,10 @@ $PLUGIN_HOOKS['item_add']['projecthelper'] = [
 - Single row (id=1) in `glpi_plugin_projecthelper_configs`
 - Fields:
   - `show_progress_bar` (boolean)
-  - `replicate_followups` (0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent)
-  - `replicate_tasks` (0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent)
+  - `replicate_followups` (VARCHAR(50), comma-separated modes: e.g., "1,2,4")
+  - `replicate_tasks` (VARCHAR(50), comma-separated modes: e.g., "1,2,4")
+- Modes: 0=No, 1=All project tickets, 2=Parent to children, 3=Child to parent, 4=Related tickets
+- Multiple selections supported (v1.3.0+): Users can combine multiple modes
 - Access via `Config::getFromDB(1)`
 
 ### Recursion Protection
@@ -80,8 +82,21 @@ $PLUGIN_HOOKS['item_add']['projecthelper'] = [
    - Independent of project links
 
 3. **Mode 3 (value=3)**: Replicate from child to parent
+
    - Flow: User adds followup to child → checks `glpi_tickets_tickets` → finds parent (tickets_id_1 = child, link = 3) → replicates to parent
    - Independent of project links
+
+4. **Mode 4 (value=4)**: Replicate to related tickets ✨ **NEW (v1.3.0)**
+   - Flow: User adds followup → checks `glpi_tickets_tickets` → finds all related tickets (link = 2, bidirectional) → replicates to each
+   - Independent of project links or hierarchy
+   - Bidirectional: works both ways in the relationship
+
+**Multiple selections (v1.3.0+)**:
+
+- Users can select multiple modes simultaneously (e.g., "1,4" for project + related)
+- Stored as comma-separated string in database
+- Code processes each mode and removes duplicates via `array_unique()`
+- Example: `explode(',', '1,2,4')` → `[1, 2, 4]` → loop processes each mode
 
 **Key constraints**:
 

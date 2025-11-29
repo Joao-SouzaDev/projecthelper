@@ -31,3 +31,31 @@ function plugin_projecthelper_uninstall()
     trigger_error("ProjectHelper Install class not found.", E_USER_ERROR);
     return false;
 }
+
+/**
+ * Função de atualização do plugin.
+ * Chamada quando a versão do plugin muda.
+ */
+function plugin_projecthelper_update()
+{
+    global $DB;
+
+    if (class_exists(Install::class)) {
+        // Busca a versão atual instalada
+        $plugin = new Plugin();
+        if ($plugin->getFromDBbyDir('projecthelper')) {
+            $current_version = $plugin->fields['version'];
+
+            // Cria um objeto VersionReader com a versão atual
+            $version_reader = new \Glpi\Toolbox\VersionReader($current_version);
+
+            // Chama a função de update
+            Install::update($version_reader);
+
+            return true;
+        }
+    }
+
+    trigger_error("ProjectHelper Install class not found.", E_USER_ERROR);
+    return false;
+}

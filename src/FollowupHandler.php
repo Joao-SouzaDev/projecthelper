@@ -57,10 +57,13 @@ class FollowupHandler
 
         self::logDebug("Configuração replicate_followups: " . $replicate_config->fields['replicate_followups']);
 
-        $replication_mode = (int) $replicate_config->fields['replicate_followups'];
+        $replication_modes_string = $replicate_config->fields['replicate_followups'];
 
-        // Verifica se a replicação está desabilitada
-        if ($replication_mode == 0) {
+        // Converte string de modos para array (ex: "1,2,4" => [1, 2, 4])
+        $replication_modes = array_map('intval', explode(',', $replication_modes_string));
+
+        // Verifica se a replicação está desabilitada (modo 0 ou vazio)
+        if (empty($replication_modes) || (count($replication_modes) === 1 && $replication_modes[0] === 0)) {
             self::logDebug("Replicação desabilitada");
             return;
         }
@@ -79,33 +82,49 @@ class FollowupHandler
 
         $related_tickets = [];
 
-        // Modo 1: Replicar para todos os tickets do mesmo projeto
-        if ($replication_mode == 1) {
-            self::logDebug("Modo: Replicar para todos do projeto");
+        // Processa cada modo de replicação configurado
+        foreach ($replication_modes as $mode) {
+            self::logDebug("Processando modo: $mode");
 
-            $project_id = self::getProjectFromTicket($ticket_id);
+            // Modo 1: Replicar para todos os tickets do mesmo projeto
+            if ($mode == 1) {
+                self::logDebug("Modo: Replicar para todos do projeto");
 
-            if (!$project_id) {
-                self::logDebug("Ticket #$ticket_id não está vinculado a nenhum projeto");
-                return;
+                $project_id = self::getProjectFromTicket($ticket_id);
+
+                if (!$project_id) {
+                    self::logDebug("Ticket #$ticket_id não está vinculado a nenhum projeto");
+                    continue;
+                }
+
+                self::logDebug("Ticket vinculado ao projeto #$project_id");
+                $tickets = self::getTicketsFromProject($project_id, $ticket_id);
+                $related_tickets = array_merge($related_tickets, $tickets);
             }
-
-            self::logDebug("Ticket vinculado ao projeto #$project_id");
-            $related_tickets = self::getTicketsFromProject($project_id, $ticket_id);
-        }
-        // Modo 2: Replicar de pai para filhos
-        elseif ($replication_mode == 2) {
-            self::logDebug("Modo: Replicar de pai para filhos");
-            $related_tickets = self::getChildrenTickets($ticket_id);
-        }
-        // Modo 3: Replicar de filho para pai
-        elseif ($replication_mode == 3) {
-            self::logDebug("Modo: Replicar de filho para pai");
-            $parent_ticket = self::getParentTicket($ticket_id);
-            if ($parent_ticket) {
-                $related_tickets = [$parent_ticket];
+            // Modo 2: Replicar de pai para filhos
+            elseif ($mode == 2) {
+                self::logDebug("Modo: Replicar de pai para filhos");
+                $tickets = self::getChildrenTickets($ticket_id);
+                $related_tickets = array_merge($related_tickets, $tickets);
+            }
+            // Modo 3: Replicar de filho para pai
+            elseif ($mode == 3) {
+                self::logDebug("Modo: Replicar de filho para pai");
+                $parent_ticket = self::getParentTicket($ticket_id);
+                if ($parent_ticket) {
+                    $related_tickets[] = $parent_ticket;
+                }
+            }
+            // Modo 4: Replicar para tickets relacionados (link = 2)
+            elseif ($mode == 4) {
+                self::logDebug("Modo: Replicar para tickets relacionados");
+                $tickets = self::getRelatedTickets($ticket_id);
+                $related_tickets = array_merge($related_tickets, $tickets);
             }
         }
+
+        // Remove duplicatas
+        $related_tickets = array_unique($related_tickets);
 
         self::logDebug("Encontrados " . count($related_tickets) . " tickets relacionados");
 
@@ -275,6 +294,45 @@ class FollowupHandler
 
         self::logDebug("Nenhum pai encontrado");
         return false;
+    }
+
+    /**
+     * Busca todos os tickets relacionados (link = 1)
+     * 
+     * @param int $ticket_id
+     * @return array
+     */
+    private static function getRelatedTickets($ticket_id)
+    {
+        global $DB;
+
+        $tickets = [];
+
+        // Busca tickets relacionados onde o ticket atual é tickets_id_1 ou tickets_id_2
+        // e link = 1 (relacionado)
+        $query = "SELECT DISTINCT 
+                    CASE 
+                        WHEN tickets_id_1 = " . (int) $ticket_id . " THEN tickets_id_2
+                        WHEN tickets_id_2 = " . (int) $ticket_id . " THEN tickets_id_1
+                    END as related_id
+                  FROM glpi_tickets_tickets
+                  WHERE (tickets_id_1 = " . (int) $ticket_id . " OR tickets_id_2 = " . (int) $ticket_id . ")
+                  AND link = 1";
+
+        self::logDebug("Query para buscar relacionados: " . $query);
+
+        $result = $DB->query($query);
+
+        if ($result) {
+            while ($row = $DB->fetchAssoc($result)) {
+                if ($row['related_id']) {
+                    $tickets[] = $row['related_id'];
+                    self::logDebug("Relacionado encontrado: #" . $row['related_id']);
+                }
+            }
+        }
+
+        return $tickets;
     }
 
     /**
